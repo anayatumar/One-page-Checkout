@@ -1,17 +1,54 @@
-# pro_cv_builder
+# Professional CV Builder
 
-A new Flutter project.
+A high-quality, professional CV builder mobile app built with Flutter. Better than Europass, 100% free, and offline-capable.
+
+## Features
+
+- **Professional Templates**: Choose from Modern, Classic, and Creative PDF templates.
+- **Easy Data Entry**: Multi-step form for personal information, work experience, education, and skills.
+- **PDF Generation**: Generate high-quality PDFs that are ready for applications.
+- **Local Storage**: All your data stays on your device. Secure and private.
+- **Offline First**: Works without an internet connection.
+- **Free Forever**: No hidden costs or subscriptions.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+### Prerequisites
 
-A few resources to get you started if this is your first Flutter project:
+- [Flutter SDK](https://docs.flutter.dev/get-started/install)
+- [Dart SDK](https://dart.dev/get-started)
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+### Installation
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/pro_cv_builder.git
+   ```
+
+2. Navigate to the project directory:
+   ```bash
+   cd pro_cv_builder
+   ```
+
+3. Install dependencies:
+   ```bash
+   flutter pub get
+   ```
+
+4. Run the app:
+   ```bash
+   flutter run
+   ```
+
+## Built With
+
+- [Flutter](https://flutter.dev/) - Framework
+- [Riverpod](https://riverpod.dev/) - State Management
+- [pdf](https://pub.dev/packages/pdf) - PDF Generation
+- [printing](https://pub.dev/packages/printing) - PDF Preview and Printing
+- [shared_preferences](https://pub.dev/packages/shared_preferences) - Local Storage
+- [google_fonts](https://pub.dev/packages/google_fonts) - Typography
+
+## License
+
+This project is licensed under the MIT License.

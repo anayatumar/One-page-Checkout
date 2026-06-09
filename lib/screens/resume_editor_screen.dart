@@ -1,10 +1,13 @@
-import 'package:flutter/material.dart';
+import 'dart:typed_data';
+import 'package:flutter/material.dart' hide Icons;
+import 'package:flutter/material.dart' as m show Icons;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import '../models/resume.dart';
 import '../providers/resume_provider.dart';
 import '../templates/modern_template.dart';
 import '../templates/classic_template.dart';
+import '../templates/creative_template.dart';
 
 class ResumeEditorScreen extends ConsumerStatefulWidget {
   final Resume? resume;
@@ -90,9 +93,19 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
 
   void _previewPDF() async {
     final resume = _getResume();
-    final pdfBytes = _selectedTemplate == 'Modern'
-        ? await ModernTemplate.generate(resume)
-        : await ClassicTemplate.generate(resume);
+    Uint8List pdfBytes;
+
+    switch (_selectedTemplate) {
+      case 'Classic':
+        pdfBytes = await ClassicTemplate.generate(resume);
+        break;
+      case 'Creative':
+        pdfBytes = await CreativeTemplate.generate(resume);
+        break;
+      case 'Modern':
+      default:
+        pdfBytes = await ModernTemplate.generate(resume);
+    }
 
     if (!mounted) return;
 
@@ -112,12 +125,12 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
           title: Text(widget.resume == null ? 'New CV' : 'Edit CV'),
           actions: [
             IconButton(
-              icon: const Icon(Icons.remove_red_eye_outlined),
+              icon: const Icon(m.Icons.remove_red_eye_outlined),
               onPressed: _previewPDF,
               tooltip: 'Preview PDF',
             ),
             IconButton(
-              icon: const Icon(Icons.save_outlined),
+              icon: const Icon(m.Icons.save_outlined),
               onPressed: _saveResume,
               tooltip: 'Save CV',
             ),
@@ -164,7 +177,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedTemplate,
-                      items: ['Modern', 'Classic'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                      items: ['Modern', 'Classic', 'Creative'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                       onChanged: (val) => setState(() => _selectedTemplate = val!),
                     ),
                   ),
@@ -196,27 +209,27 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildFormSection('General Information', [
-            _buildTextField(_titleController, 'CV Title', 'e.g., Senior Developer CV', Icons.title),
+            _buildTextField(_titleController, 'CV Title', 'e.g., Senior Developer CV', m.Icons.title),
           ]),
           const SizedBox(height: 24),
           _buildFormSection('Contact Details', [
             Row(
               children: [
-                Expanded(child: _buildTextField(_firstNameController, 'First Name', 'John', Icons.person_outline)),
+                Expanded(child: _buildTextField(_firstNameController, 'First Name', 'John', m.Icons.person_outline)),
                 const SizedBox(width: 16),
-                Expanded(child: _buildTextField(_lastNameController, 'Last Name', 'Doe', Icons.person_outline)),
+                Expanded(child: _buildTextField(_lastNameController, 'Last Name', 'Doe', m.Icons.person_outline)),
               ],
             ),
             const SizedBox(height: 16),
-            _buildTextField(_emailController, 'Email', 'john.doe@example.com', Icons.email_outlined, keyboardType: TextInputType.emailAddress),
+            _buildTextField(_emailController, 'Email', 'john.doe@example.com', m.Icons.email_outlined, keyboardType: TextInputType.emailAddress),
             const SizedBox(height: 16),
-            _buildTextField(_phoneController, 'Phone', '+1 234 567 890', Icons.phone_outlined, keyboardType: TextInputType.phone),
+            _buildTextField(_phoneController, 'Phone', '+1 234 567 890', m.Icons.phone_outlined, keyboardType: TextInputType.phone),
             const SizedBox(height: 16),
-            _buildTextField(_addressController, 'Address', 'City, Country', Icons.location_on_outlined),
+            _buildTextField(_addressController, 'Address', 'City, Country', m.Icons.location_on_outlined),
           ]),
           const SizedBox(height: 24),
           _buildFormSection('Professional Summary', [
-            _buildTextField(_summaryController, 'Profile Summary', 'Short professional bio...', Icons.description_outlined, maxLines: 5),
+            _buildTextField(_summaryController, 'Profile Summary', 'Short professional bio...', m.Icons.description_outlined, maxLines: 5),
           ]),
         ],
       ),
@@ -315,7 +328,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
           padding: const EdgeInsets.all(16.0),
           child: OutlinedButton.icon(
             onPressed: onAdd,
-            icon: const Icon(Icons.add),
+            icon: const Icon(m.Icons.add),
             label: Text(btnLabel),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size(double.infinity, 50),
@@ -336,7 +349,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
       child: ListTile(
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
-        trailing: IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: onDelete),
+        trailing: IconButton(icon: const Icon(m.Icons.delete_outline, color: Colors.red), onPressed: onDelete),
       ),
     );
   }
@@ -358,11 +371,11 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildTextField(positionController, 'Position', 'Software Engineer', Icons.work_outline),
+                _buildTextField(positionController, 'Position', 'Software Engineer', m.Icons.work_outline),
                 const SizedBox(height: 12),
-                _buildTextField(companyController, 'Company', 'Google', Icons.business_outlined),
+                _buildTextField(companyController, 'Company', 'Google', m.Icons.business_outlined),
                 const SizedBox(height: 12),
-                _buildTextField(startController, 'Start Date', 'Jan 2020', Icons.calendar_today_outlined),
+                _buildTextField(startController, 'Start Date', 'Jan 2020', m.Icons.calendar_today_outlined),
                 const SizedBox(height: 12),
                 CheckboxListTile(
                   title: const Text('Current Position'),
@@ -372,10 +385,10 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
                 ),
                 if (!isCurrent) ...[
                   const SizedBox(height: 12),
-                  _buildTextField(endController, 'End Date', 'Present', Icons.calendar_today_outlined),
+                  _buildTextField(endController, 'End Date', 'Present', m.Icons.calendar_today_outlined),
                 ],
                 const SizedBox(height: 12),
-                _buildTextField(descController, 'Description', 'Responsibilities...', Icons.description_outlined, maxLines: 3),
+                _buildTextField(descController, 'Description', 'Responsibilities...', m.Icons.description_outlined, maxLines: 3),
               ],
             ),
           ),
@@ -417,13 +430,13 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildTextField(degreeController, 'Degree', 'B.Sc. Computer Science', Icons.school_outlined),
+              _buildTextField(degreeController, 'Degree', 'B.Sc. Computer Science', m.Icons.school_outlined),
               const SizedBox(height: 12),
-              _buildTextField(institutionController, 'Institution', 'Harvard University', Icons.account_balance_outlined),
+              _buildTextField(institutionController, 'Institution', 'Harvard University', m.Icons.account_balance_outlined),
               const SizedBox(height: 12),
-              _buildTextField(startController, 'Start Date', '2016', Icons.calendar_today_outlined),
+              _buildTextField(startController, 'Start Date', '2016', m.Icons.calendar_today_outlined),
               const SizedBox(height: 12),
-              _buildTextField(endController, 'End Date', '2020', Icons.calendar_today_outlined),
+              _buildTextField(endController, 'End Date', '2020', m.Icons.calendar_today_outlined),
             ],
           ),
         ),
@@ -460,7 +473,7 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildTextField(skillController, 'Skill Name', 'Flutter', Icons.star_outline),
+              _buildTextField(skillController, 'Skill Name', 'Flutter', m.Icons.star_outline),
               const SizedBox(height: 20),
               const Text('Proficiency Level'),
               Slider(
