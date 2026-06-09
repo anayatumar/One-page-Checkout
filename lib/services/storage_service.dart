@@ -33,6 +33,26 @@ class StorageService {
     await _saveAll(resumes);
   }
 
+  Future<String> exportData() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_key) ?? '[]';
+  }
+
+  Future<void> importData(String json) async {
+    final prefs = await SharedPreferences.getInstance();
+    // Validate if it's a valid list of resumes
+    try {
+      final List<dynamic> decoded = jsonDecode(json);
+      // Try to parse to ensure validity
+      for (var item in decoded) {
+        Resume.fromMap(item);
+      }
+      await prefs.setString(_key, json);
+    } catch (e) {
+      throw Exception('Invalid backup file');
+    }
+  }
+
   Future<void> _saveAll(List<Resume> resumes) async {
     final prefs = await SharedPreferences.getInstance();
     final String encoded = jsonEncode(resumes.map((r) => r.toMap()).toList());

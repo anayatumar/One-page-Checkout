@@ -9,8 +9,6 @@ final storageServiceProvider = Provider<StorageService>((ref) {
 class ResumeListNotifier extends Notifier<List<Resume>> {
   @override
   List<Resume> build() {
-    // We can't do async work here easily in build() without returning a Future,
-    // so we return initial empty state and load later.
     _loadInitial();
     return [];
   }
@@ -34,6 +32,17 @@ class ResumeListNotifier extends Notifier<List<Resume>> {
   Future<void> deleteResume(String id) async {
     final storageService = ref.read(storageServiceProvider);
     await storageService.deleteResume(id);
+    await loadResumes();
+  }
+
+  Future<String> exportBackup() async {
+    final storageService = ref.read(storageServiceProvider);
+    return await storageService.exportData();
+  }
+
+  Future<void> importBackup(String json) async {
+    final storageService = ref.read(storageServiceProvider);
+    await storageService.importData(json);
     await loadResumes();
   }
 }

@@ -1,0 +1,15 @@
+{
+  "appTitle": "Constructor de CV Profesional",
+  "myResumes": "Mis Currículums",
+  "noResumes": "Aún no hay currículums",
+  "createFirstCV": "¡Crea tu primer CV profesional ahora!",
+  "createNewCV": "CREAR NUEVO CV",
+  "recentDocuments": "DOCUMENTOS RECIENTES",
+  "lastUpdated": "Última actualización",
+  "edit": "Editar",
+  "delete": "Eliminar",
+  "exportBackup": "Exportar Respaldo",
+  "importBackup": "Importar Respaldo",
+  "backupRestored": "Respaldo restaurado con éxito",
+  "backupFailed": "Fallo al restaurar el respaldo: Formato inválido"
+}

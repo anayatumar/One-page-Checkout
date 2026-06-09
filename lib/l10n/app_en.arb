@@ -1,0 +1,15 @@
+{
+  "appTitle": "Professional CV Builder",
+  "myResumes": "My Resumes",
+  "noResumes": "No resumes yet",
+  "createFirstCV": "Create your first professional CV now!",
+  "createNewCV": "CREATE NEW CV",
+  "recentDocuments": "RECENT DOCUMENTS",
+  "lastUpdated": "Last updated",
+  "edit": "Edit",
+  "delete": "Delete",
+  "exportBackup": "Export Backup",
+  "importBackup": "Import Backup",
+  "backupRestored": "Backup restored successfully",
+  "backupFailed": "Failed to restore backup: Invalid format"
+}

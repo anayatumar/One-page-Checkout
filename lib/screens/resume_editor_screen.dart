@@ -8,6 +8,8 @@ import '../providers/resume_provider.dart';
 import '../templates/modern_template.dart';
 import '../templates/classic_template.dart';
 import '../templates/creative_template.dart';
+import '../templates/executive_template.dart';
+import '../utils/app_localizations.dart';
 
 class ResumeEditorScreen extends ConsumerStatefulWidget {
   final Resume? resume;
@@ -19,6 +21,7 @@ class ResumeEditorScreen extends ConsumerStatefulWidget {
 }
 
 class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
+  final _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
@@ -82,45 +85,76 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
   }
 
   void _saveResume() {
-    ref.read(resumeListProvider.notifier).saveResume(_getResume());
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('CV Saved Successfully'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    if (_formKey.currentState!.validate()) {
+      ref.read(resumeListProvider.notifier).saveResume(_getResume());
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('CV Saved Successfully'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fix the errors in the Personal Info tab'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _previewPDF() async {
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please complete Personal Info tab first')),
+      );
+      return;
+    }
+
     final resume = _getResume();
     Uint8List pdfBytes;
 
-    switch (_selectedTemplate) {
-      case 'Classic':
-        pdfBytes = await ClassicTemplate.generate(resume);
-        break;
-      case 'Creative':
-        pdfBytes = await CreativeTemplate.generate(resume);
-        break;
-      case 'Modern':
-      default:
-        pdfBytes = await ModernTemplate.generate(resume);
+    try {
+      switch (_selectedTemplate) {
+        case 'Classic':
+          pdfBytes = await ClassicTemplate.generate(resume);
+          break;
+        case 'Creative':
+          pdfBytes = await CreativeTemplate.generate(resume);
+          break;
+        case 'Executive':
+          pdfBytes = await ExecutiveTemplate.generate(resume);
+          break;
+        case 'Modern':
+        default:
+          pdfBytes = await ModernTemplate.generate(resume);
+      }
+
+      if (!mounted) return;
+
+      await Printing.layoutPdf(
+        onLayout: (format) => pdfBytes,
+        name: '${resume.title}.pdf',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error generating PDF: $e')),
+        );
+      }
     }
-
-    if (!mounted) return;
-
-    await Printing.layoutPdf(
-      onLayout: (format) => pdfBytes,
-      name: '${resume.title}.pdf',
-    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return DefaultTabController(
       length: 4,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F7F9),
+        backgroundColor: isDark ? Colors.black : const Color(0xFFF5F7F9),
         appBar: AppBar(
           title: Text(widget.resume == null ? 'New CV' : 'Edit CV'),
           actions: [
@@ -135,31 +169,34 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
               tooltip: 'Save CV',
             ),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             isScrollable: true,
-            indicatorColor: Colors.white,
+            indicatorColor: isDark ? Theme.of(context).primaryColor : Colors.white,
             indicatorWeight: 3,
             tabs: [
-              Tab(text: 'PERSONAL'),
-              Tab(text: 'EXPERIENCE'),
-              Tab(text: 'EDUCATION'),
-              Tab(text: 'SKILLS'),
+              Tab(text: l10n.get('personal')),
+              Tab(text: l10n.get('experience')),
+              Tab(text: l10n.get('education')),
+              Tab(text: l10n.get('skills')),
             ],
-            labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
         ),
-        body: TabBarView(
-          children: [
-            _buildPersonalInfoTab(),
-            _buildExperienceTab(),
-            _buildEducationTab(),
-            _buildSkillsTab(),
-          ],
+        body: Form(
+          key: _formKey,
+          child: TabBarView(
+            children: [
+              _buildPersonalInfoTab(),
+              _buildExperienceTab(),
+              _buildEducationTab(),
+              _buildSkillsTab(),
+            ],
+          ),
         ),
         bottomNavigationBar: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: isDark ? Colors.grey[900] : Colors.white,
             boxShadow: [
               BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -5)),
             ],
@@ -171,13 +208,13 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[300]!),
+                    border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedTemplate,
-                      items: ['Modern', 'Classic', 'Creative'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                      items: ['Modern', 'Classic', 'Creative', 'Executive'].map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
                       onChanged: (val) => setState(() => _selectedTemplate = val!),
                     ),
                   ),
@@ -209,21 +246,22 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildFormSection('General Information', [
-            _buildTextField(_titleController, 'CV Title', 'e.g., Senior Developer CV', m.Icons.title),
+            _buildTextField(_titleController, 'CV Title', 'e.g., Senior Developer CV', m.Icons.title, validator: (v) => v!.isEmpty ? 'Title is required' : null),
           ]),
           const SizedBox(height: 24),
           _buildFormSection('Contact Details', [
             Row(
               children: [
-                Expanded(child: _buildTextField(_firstNameController, 'First Name', 'John', m.Icons.person_outline)),
+                Expanded(child: _buildTextField(_firstNameController, 'First Name', 'John', m.Icons.person_outline, validator: (v) => v!.isEmpty ? 'Required' : null)),
                 const SizedBox(width: 16),
-                Expanded(child: _buildTextField(_lastNameController, 'Last Name', 'Doe', m.Icons.person_outline)),
+                Expanded(child: _buildTextField(_lastNameController, 'Last Name', 'Doe', m.Icons.person_outline, validator: (v) => v!.isEmpty ? 'Required' : null)),
               ],
             ),
             const SizedBox(height: 16),
-            _buildTextField(_emailController, 'Email', 'john.doe@example.com', m.Icons.email_outlined, keyboardType: TextInputType.emailAddress),
+            _buildTextField(_emailController, 'Email', 'john.doe@example.com', m.Icons.email_outlined, keyboardType: TextInputType.emailAddress,
+                validator: (v) => v!.isEmpty || !v.contains('@') ? 'Enter a valid email' : null),
             const SizedBox(height: 16),
-            _buildTextField(_phoneController, 'Phone', '+1 234 567 890', m.Icons.phone_outlined, keyboardType: TextInputType.phone),
+            _buildTextField(_phoneController, 'Phone', '+1 234 567 890', m.Icons.phone_outlined, keyboardType: TextInputType.phone, validator: (v) => v!.isEmpty ? 'Phone is required' : null),
             const SizedBox(height: 16),
             _buildTextField(_addressController, 'Address', 'City, Country', m.Icons.location_on_outlined),
           ]),
@@ -298,11 +336,12 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, String hint, IconData icon, {TextInputType? keyboardType, int maxLines = 1}) {
-    return TextField(
+  Widget _buildTextField(TextEditingController controller, String label, String hint, IconData icon, {TextInputType? keyboardType, int maxLines = 1, String? Function(String?)? validator}) {
+    return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
+      validator: validator,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -342,10 +381,15 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
   }
 
   Widget _buildListItem(String title, String subtitle, VoidCallback onDelete) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 0,
+      color: isDark ? Colors.grey[900] : Colors.white,
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey[200]!)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+      ),
       child: ListTile(
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
@@ -396,17 +440,19 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
             ElevatedButton(
               onPressed: () {
-                setState(() {
-                  _experience.add(Experience(
-                    company: companyController.text,
-                    position: positionController.text,
-                    startDate: startController.text,
-                    endDate: isCurrent ? null : endController.text,
-                    isCurrent: isCurrent,
-                    description: descController.text,
-                  ));
-                });
-                Navigator.pop(context);
+                if (positionController.text.isNotEmpty && companyController.text.isNotEmpty) {
+                  setState(() {
+                    _experience.add(Experience(
+                      company: companyController.text,
+                      position: positionController.text,
+                      startDate: startController.text,
+                      endDate: isCurrent ? null : endController.text,
+                      isCurrent: isCurrent,
+                      description: descController.text,
+                    ));
+                  });
+                  Navigator.pop(context);
+                }
               },
               child: const Text('ADD'),
             ),
@@ -444,15 +490,17 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
           ElevatedButton(
             onPressed: () {
-              setState(() {
-                _education.add(Education(
-                  institution: institutionController.text,
-                  degree: degreeController.text,
-                  startDate: startController.text,
-                  endDate: endController.text,
-                ));
-              });
-              Navigator.pop(context);
+              if (degreeController.text.isNotEmpty && institutionController.text.isNotEmpty) {
+                setState(() {
+                  _education.add(Education(
+                    institution: institutionController.text,
+                    degree: degreeController.text,
+                    startDate: startController.text,
+                    endDate: endController.text,
+                  ));
+                });
+                Navigator.pop(context);
+              }
             },
             child: const Text('ADD'),
           ),
@@ -486,10 +534,12 @@ class _ResumeEditorScreenState extends ConsumerState<ResumeEditorScreen> {
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
             ElevatedButton(
               onPressed: () {
-                setState(() {
-                  _skills.add(Skill(name: skillController.text, level: level));
-                });
-                Navigator.pop(context);
+                if (skillController.text.isNotEmpty) {
+                  setState(() {
+                    _skills.add(Skill(name: skillController.text, level: level));
+                  });
+                  Navigator.pop(context);
+                }
               },
               child: const Text('ADD'),
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/app_localizations.dart';
 import 'home_screen.dart';
 
 class OnboardingScreen extends StatelessWidget {
@@ -18,6 +19,8 @@ class OnboardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       body: Container(
         padding: const EdgeInsets.all(32),
@@ -33,28 +36,28 @@ class OnboardingScreen extends StatelessWidget {
           children: [
             const Icon(Icons.description, size: 100, color: Colors.white),
             const SizedBox(height: 40),
-            const Text(
-              'Professional CV Builder',
+            Text(
+              l10n.get('appTitle'),
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Create professional, high-quality resumes in minutes. Better than Europass, and completely free.',
+            Text(
+              l10n.get('onboardingDesc'),
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 18,
                 color: Colors.white70,
               ),
             ),
             const SizedBox(height: 60),
-            _buildFeature(Icons.check_circle_outline, '100% Free Access'),
-            _buildFeature(Icons.check_circle_outline, 'Professional PDF Templates'),
-            _buildFeature(Icons.check_circle_outline, 'Easy to use & Secure'),
+            _buildFeature(Icons.check_circle_outline, l10n.get('freeAccess')),
+            _buildFeature(Icons.check_circle_outline, l10n.get('professionalTemplates')),
+            _buildFeature(Icons.check_circle_outline, l10n.get('easySecure')),
             const Spacer(),
             SizedBox(
               width: double.infinity,
@@ -68,9 +71,9 @@ class OnboardingScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                child: const Text(
-                  'GET STARTED',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                child: Text(
+                  l10n.get('getStarted'),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ),

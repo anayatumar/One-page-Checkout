@@ -1,23 +1,92 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:file_picker/file_picker.dart';
 import '../providers/resume_provider.dart';
+import '../utils/app_localizations.dart';
 import 'resume_editor_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
+  Future<void> _exportBackup(BuildContext context, WidgetRef ref) async {
+    final json = await ref.read(resumeListProvider.notifier).exportBackup();
+    await Share.share(json, subject: 'My Resumes Backup');
+  }
+
+  Future<void> _importBackup(BuildContext context, WidgetRef ref) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json', 'txt'],
+    );
+
+    if (result != null && result.files.single.bytes != null) {
+      final content = utf8.decode(result.files.single.bytes!);
+      try {
+        await ref.read(resumeListProvider.notifier).importBackup(content);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context).get('backupRestored'))),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context).get('backupFailed'))),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final resumes = ref.watch(resumeListProvider);
+    final l10n = AppLocalizations.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F9),
+      backgroundColor: isDark ? Colors.black : const Color(0xFFF5F7F9),
       appBar: AppBar(
-        title: const Text(
-          'My Resumes',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          l10n.get('myResumes'),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: false,
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'export') {
+                _exportBackup(context, ref);
+              } else if (value == 'import') {
+                _importBackup(context, ref);
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'export',
+                child: Row(
+                  children: [
+                    Icon(Icons.upload, size: 20, color: isDark ? Colors.white : Colors.black),
+                    const SizedBox(width: 8),
+                    Text(l10n.get('exportBackup')),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'import',
+                child: Row(
+                  children: [
+                    Icon(Icons.download, size: 20, color: isDark ? Colors.white : Colors.black),
+                    const SizedBox(width: 8),
+                    Text(l10n.get('importBackup')),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: resumes.isEmpty
           ? Center(
@@ -29,11 +98,11 @@ class HomeScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isDark ? Colors.grey[900] : Colors.white,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 10,
                             spreadRadius: 5,
                           ),
@@ -46,15 +115,15 @@ class HomeScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const Text(
-                      'Your professional future starts here',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    Text(
+                      l10n.get('noResumes'),
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Create a professional CV in minutes with our expert templates.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    Text(
+                      l10n.get('createFirstCV'),
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
@@ -66,7 +135,7 @@ class HomeScreen extends ConsumerWidget {
                         );
                       },
                       icon: const Icon(Icons.add),
-                      label: const Text('CREATE NEW CV'),
+                      label: Text(l10n.get('createNewCV')),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                         textStyle: const TextStyle(fontWeight: FontWeight.bold),
@@ -78,12 +147,12 @@ class HomeScreen extends ConsumerWidget {
             )
           : CustomScrollView(
               slivers: [
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                     child: Text(
-                      'RECENT DOCUMENTS',
-                      style: TextStyle(
+                      l10n.get('recentDocuments'),
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: Colors.grey,
@@ -100,10 +169,11 @@ class HomeScreen extends ConsumerWidget {
                         final resume = resumes[index];
                         return Card(
                           elevation: 0,
+                          color: isDark ? Colors.grey[900] : Colors.white,
                           margin: const EdgeInsets.only(bottom: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
-                            side: BorderSide(color: Colors.grey[200]!),
+                            side: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
                           ),
                           child: InkWell(
                             onTap: () {
@@ -145,7 +215,7 @@ class HomeScreen extends ConsumerWidget {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          'Last updated: ${DateTime.now().toLocal().toString().split(' ')[0]}',
+                                          '${l10n.get('lastUpdated')}: ${DateTime.now().toLocal().toString().split(' ')[0]}',
                                           style: TextStyle(
                                             color: Colors.grey[600],
                                             fontSize: 12,
@@ -168,23 +238,23 @@ class HomeScreen extends ConsumerWidget {
                                       }
                                     },
                                     itemBuilder: (context) => [
-                                      const PopupMenuItem(
+                                      PopupMenuItem(
                                         value: 'edit',
                                         child: Row(
                                           children: [
-                                            Icon(Icons.edit, size: 20),
-                                            SizedBox(width: 8),
-                                            Text('Edit'),
+                                            Icon(Icons.edit, size: 20, color: isDark ? Colors.white : Colors.black),
+                                            const SizedBox(width: 8),
+                                            Text(l10n.get('edit')),
                                           ],
                                         ),
                                       ),
-                                      const PopupMenuItem(
+                                      PopupMenuItem(
                                         value: 'delete',
                                         child: Row(
                                           children: [
-                                            Icon(Icons.delete, size: 20, color: Colors.red),
-                                            SizedBox(width: 8),
-                                            Text('Delete', style: TextStyle(color: Colors.red)),
+                                            const Icon(Icons.delete, size: 20, color: Colors.red),
+                                            const SizedBox(width: 8),
+                                            Text(l10n.get('delete'), style: const TextStyle(color: Colors.red)),
                                           ],
                                         ),
                                       ),
@@ -211,7 +281,7 @@ class HomeScreen extends ConsumerWidget {
                 );
               },
               backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
+              foregroundColor: isDark ? Colors.black : Colors.white,
               child: const Icon(Icons.add),
             )
           : null,
